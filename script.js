@@ -302,7 +302,7 @@ function finishCheckItem(card) {
     if (activeThreads > 0) activeThreads--;
     let delay = 150; // Default delay
     if (currentGateForBatch === "rnd_cc_gateway") {
-        delay = 3000; // 3 seconds
+        delay = 2000; // 3 seconds
     } else if (currentGateForBatch === "b3_cc_gateway") {
         delay = 17000; // 17 seconds
     }
