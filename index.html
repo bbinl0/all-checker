@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7621591598245473"
-     crossorigin="anonymous"></script>
-     
-     <meta name="google-adsense-account" content="ca-pub-7621591598245473">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
@@ -35,9 +31,20 @@
             </div>
 
             <div class="app-actions">
-                 <a href="https://t.me/+1bh_SOI3iOczNjVk" target="_blank" rel="noopener noreferrer" class="theme-action-icon" title="Contact Venex on Telegram">
-                    <i class="fab fa-telegram-plane"></i>
-                 </a>
+                <div class="menu-container">
+                    <div id="menuBtn" class="theme-action-icon" title="More Tools">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                    <div id="menuDropdown" class="menu-dropdown">
+                        <ul>
+                            <li><a href="https://bbinl.github.io/cc-gen" target="_blank">💳 cc generator</a></li>
+                            <li><a href="https://bbinl.github.io/cc-checker/" target="_blank">🔎 checker.top</a></li>
+                            <li><a href="https://checker-lake.vercel.app/" target="_blank">🧠 b3 cc checker</a></li>
+                            <li><a href="https://hexmr02-ui.github.io/all-checker/" target="_blank">🧰 cc gen + check</a></li>
+                            <li><a href="" target="_blank">💎 bBINl all API</a></li>
+                        </ul>
+                    </div>
+                </div>
                  <div id="resetDataBtn" class="theme-action-icon" title="Reset All Data & Settings">
                     <i class="fas fa-sync-alt"></i>
                 </div>
@@ -58,11 +65,6 @@
 
         <main class="app-content">
             <div class="counters">
-                <div class="counter approved">
-                    <div class="counter-icon"><i class="fas fa-check-circle"></i></div>
-                    <div class="counter-label">APPROVED</div>
-                    <div class="counter-value approved">0</div>
-                </div>
                 <div class="counter live">
                     <div class="counter-icon"><i class="fas fa-bolt"></i></div>
                     <div class="counter-label">LIVE</div>
@@ -70,8 +72,13 @@
                 </div>
                 <div class="counter declined">
                     <div class="counter-icon"><i class="fas fa-times-circle"></i></div>
-                    <div class="counter-label">DECLINED</div>
+                    <div class="counter-label">DEAD</div>
                     <div class="counter-value reprovadas">0</div>
+                </div>
+                <div class="counter unknown">
+                    <div class="counter-icon"><i class="fas fa-question-circle"></i></div>
+                    <div class="counter-label">UNKNOWN</div>
+                    <div class="counter-value unknown">0</div>
                 </div>
             </div>
 
@@ -157,42 +164,14 @@
                                     </span>
                                 </div>
                                 <select name="gate" id="gate" class="form-input">
- <option value="Auto.php">AUTO WOOCOMMERCE (B3/STRIPE/SQUARE/PAYFLOW)</option>
-                                   <option value="Paypal.php">PAYPAL AUTH 0.1$</option>
-                                   <option value="Vbv.php">3D/VBV LOOKUP</option>
+                                   <option value="rnd_cc_gateway">RND CC Check Gateway</option>
+                                   <option value="b3_cc_gateway">B3 CC Check Gateway</option>
                                 </select>
                             </div>
                         </div>
 
                         <div id="gate-credits-display" class="gate-credits-display-venex" style="display: none;"></div>
                         
-                        <div class="form-group proxy-toggle-wrapper" style="display: flex; align-items: center; justify-content: space-between;">
-                            <label for="proxy-toggle" class="form-label" style="margin-bottom: 0;"><i class="fas fa-user-secret"></i> PROXY MODE</label>
-                            <div class="theme-switch-wrapper">
-                                <label class="theme-switch" for="proxy-toggle" title="TOGGLE PROXY MODE">
-                                    <input type="checkbox" id="proxy-toggle">
-                                    <div class="slider round"></div>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div id="proxy-settings-container" style="display: none;">
-                            <div class="form-row-flex">
-                                <div class="form-group form-group-half" id="proxy_input_group">
-                                    <label for="proxy_input" class="form-label"><i class="fas fa-server"></i> PROXY LIST (IP:PORT or IP:PORT:USER:PASS)</label>
-                                    <textarea rows="3" class="form-input" id="proxy_input" placeholder="PASTE YOUR PROXY LIST HERE, ONE PER LINE."></textarea>
-                                </div>
-                                <div class="form-group form-group-half" id="proxy_type_group">
-                                    <label for="proxy_type" class="form-label"><i class="fas fa-network-wired"></i> PROXY TYPE</label>
-                                    <select name="proxy_type" id="proxy_type" class="form-input">
-                                        <option value="http">HTTP</option>
-                                        <option value="socks4">SOCKS4</option>
-                                        <option value="socks5">SOCKS5</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
                       <div class="form-group" style="display:none;">
     <label for="checker-speed" class="form-label"><i class="fas fa-tachometer-alt"></i> CHECKER SPEED (THREADS)</label>
     <select name="checker-speed" id="checker-speed" class="form-input">
@@ -200,59 +179,13 @@
     </select>
 </div>
 
-
-                        <div class="conditional-inputs-container">
-                            <div class="form-row-flex conditional-group" id="manual_cookie_group" style="display: none;">
-                                <div class="form-group form-group-full conditional-group">
-                                     <label for="manual_cookie" class="form-label"><i class="fab fa-wordpress"></i> WOOCOMMERCE COOKIE</label>
-                                     <input type="text" class="form-input" id="manual_cookie" placeholder="WOOCOMMERCE SESSION COOKIE">
-                                </div>
-                            </div>
-                             <div class="form-row-flex conditional-group" id="link_site_group" style="display: none;">
-                                <div class="form-group form-group-full conditional-group">
-                                     <label for="link_site" class="form-label"><i class="fas fa-link"></i> WOOCOMMERCE ../add-payment-method URL</label>
-                                     <input type="text" class="form-input" id="link_site" placeholder="/MY-ACCOUNT/PAYMENT-METHODS/">
-                                </div>
-                            </div>
-                            <div class="form-row-flex conditional-group" id="woocommerce_tutorial_group" style="display: none; margin-bottom: 0.8rem; gap: 0.5rem;">
-                                <div class="form-group" style="flex-grow: 1; margin-bottom: 0;">
-                                    <button id="wooTutorialAndroidBtn" class="btn btn-secondary btn-sm" style="width: 100%;">
-                                        <i class="fab fa-android"></i> ANDROID TUTORIAL
-                                    </button>
-                                </div>
-                                <div class="form-group" style="flex-grow: 1; margin-bottom: 0;">
-                                    <button id="wooTutorialWindowsBtn" class="btn btn-secondary btn-sm" style="width: 100%;">
-                                        <i class="fab fa-windows"></i> WINDOWS TUTORIAL
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="form-row-flex conditional-group" id="amazon_region_group" style="display: none;">
-                                <div class="form-group form-group-half">
-                                    <label for="amazon_region" class="form-label"><i class="fas fa-globe-americas"></i> AMAZON REGION</label>
-                                    <select name="amazon_region" id="amazon_region" class="form-input">
-                                        <option value="us">UNITED STATES (US)</option>
-                                        <!--<option value="it">ITALY (IT)</option>-->
-                                        <!--<option value="ca">CANADA (CA)</option>-->
-                                        <!--<option value="mx">MEXICO (MX)</option>-->
-                                        <!--<option value="jp">JAPAN (JP)</option>-->
-                                    </select>
-                                </div>
-                                <div class="form-group form-group-half" id="amazon_cookie_group">
-                                     <label for="amazon_cookie" class="form-label">
-                                         <i class="fas fa-cookie-bite"></i> AMAZON COOKIE
-                                         <span id="amazon-cookie-helper-link" class="amazon-cookie-helper-link-venex" style="display: none;"></span>
-                                     </label>
-                                     <input type="text" class="form-input" id="amazon_cookie" placeholder="AMAZON SESSION COOKIE">
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="form-group">
                              <label for="input-list" class="form-label"><i class="fas fa-clipboard-list"></i> CARD LIST (FORMAT: CC|MM|YYYY|CVV)</label>
                              <textarea class="form-input" id="input-list" placeholder="PASTE CARDS HERE - INVALID FORMATS WILL BE CONVERTED" style="height: 120px;"></textarea>
                         </div>
                          <div class="form-group status-display-venex">
                             <span class="badge-venex badge-neutral-venex" id="checker-status"><i class="fas fa-hourglass-start"></i> WAITING TO START...</span>
+                            <span class="badge-venex badge-info-venex" id="delay-timer-display" style="display: none; margin-top: 5px;"></span>
                         </div>
                     </div>
                     <div class="card-footer">
@@ -274,27 +207,11 @@
             <hr class="gradient-hr">
 
             <div class="results-display-stacked">
-                <div class="result-block result-block-approved">
-                    <div class="result-block-header">
-                        <div class="result-block-title">
-                            <i class="fas fa-check-circle"></i>
-                            <span class="title-text">APPROVED / CHARGED</span>
-                            <span class="badge badge-success ml-1 approved">0</span>
-                        </div>
-                        <div class="btn-group">
-                            <button title="COPY LIST" class="btn btn-sm btn-copy-approved"><i class="fas fa-copy"></i> COPY</button>
-                        </div>
-                    </div>
-                    <p class="result-block-total">TOTAL APPROVED: <span class="approved">0</span></p>
-                    <div id="lista_approved" class="result-box-compact">
-                    </div>
-                </div>
-
                 <div class="result-block result-block-live">
                     <div class="result-block-header">
                         <div class="result-block-title">
                             <i class="fas fa-bolt"></i>
-                            <span class="title-text">LIVE / FUNDS</span>
+                            <span class="title-text">LIVE</span>
                             <span class="badge badge-warning ml-1 aprovadas">0</span>
                         </div>
                         <div class="btn-group">
@@ -310,15 +227,31 @@
                     <div class="result-block-header">
                         <div class="result-block-title">
                             <i class="fas fa-times-circle"></i>
-                            <span class="title-text">DECLINED / ERRORS</span>
+                            <span class="title-text">DEAD</span>
                             <span class="badge badge-danger ml-1 reprovadas">0</span>
                         </div>
                         <div class="btn-group">
                             <button title="CLEAR LIST" class="btn btn-sm btn-trash"><i class="fas fa-trash"></i> CLEAR</button>
                         </div>
                     </div>
-                    <p class="result-block-total">TOTAL DECLINED/ERRORS: <span class="reprovadas">0</span></p>
+                    <p class="result-block-total">TOTAL DEAD: <span class="reprovadas">0</span></p>
                     <div id="lista_reprovadas" class="result-box-compact">
+                    </div>
+                </div>
+
+                <div class="result-block result-block-unknown">
+                    <div class="result-block-header">
+                        <div class="result-block-title">
+                            <i class="fas fa-question-circle"></i>
+                            <span class="title-text">UNKNOWN</span>
+                            <span class="badge badge-info ml-1 unknown">0</span>
+                        </div>
+                        <div class="btn-group">
+                            <button title="COPY LIST" class="btn btn-sm btn-copy-unknown"><i class="fas fa-copy"></i> COPY</button>
+                        </div>
+                    </div>
+                    <p class="result-block-total">TOTAL UNKNOWN: <span class="unknown">0</span></p>
+                    <div id="lista_unknown" class="result-box-compact">
                     </div>
                 </div>
             </div>
@@ -329,8 +262,8 @@
             <div class="footer-spotify-player">
                 <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/5QlTLnjksyC0fXKCbTTCdU?utm_source=generator&theme=0" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
             </div>
-            <p>Developed By <a href="https://t.me/Venex444" target="_blank" rel="noopener noreferrer">Wiz Venex</a> <i class="fas fa-code heart-icon"></i></p>
-            <p>UI Concept & Base: <a href="https://t.me/WizVenex" target="_blank" rel="noopener noreferrer">Wiz Venex</a> & <a href="https://t.me/PladixOficial" target="_blank" rel="noopener noreferrer">Pladix Oficial</a></p>
+            <p>Developed By Wiz Venex <i class="fas fa-code heart-icon"></i></p>
+            <p>UI Concept & Base: Wiz Venex & Pladix Oficial</p>
         </footer>
 
     </div>
