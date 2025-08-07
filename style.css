@@ -1,5 +1,4 @@
-        /* --- THEME: DARK & YELLOW --- */
-        :root {
+:root {
             --bg-primary: #121212;
             --bg-secondary: #1E1E1E;
             --bg-tertiary: #282828;
@@ -8,10 +7,10 @@
             --text-primary: #E0E0E0;
             --text-secondary: #A0A0A0;
             --text-tertiary: #666666;
-            --accent-primary: #FFD700;
-            --accent-primary-dark: #DAA520;
-            --accent-primary-rgb: 255, 215, 0;
-            --accent-primary-text: #121212;
+            --accent-primary: #007bff;
+            --accent-primary-dark: #0069d9;
+            --accent-primary-rgb: 0, 123, 255;
+            --accent-primary-text: #FFFFFF;
 
             --status-success: #28a745;
             --status-success-light: rgba(40, 167, 69, 0.15);
@@ -19,12 +18,20 @@
             --status-success-text: var(--accent-primary-text);
             --status-success-on-dark: var(--status-success);
 
-            --status-live: #FFA500;
-            --status-warning: #FFA500;
-            --status-live-light: rgba(255, 165, 0, 0.15);
-            --status-live-rgb: 255, 165, 0;
-            --status-live-text: #121212;
+            --status-live: #28a745;
+            --status-warning: #28a745;
+            --status-live-light: rgba(40, 167, 69, 0.15);
+            --status-live-rgb: 40, 167, 69;
+            --status-live-text: #FFFFFF;
             --status-live-on-dark: var(--status-live);
+
+            --status-unknown: #FFA500;
+            --status-info: #FFA500;
+            --status-unknown-light: rgba(255, 165, 0, 0.15);
+            --status-info-light: rgba(255, 165, 0, 0.15);
+            --status-unknown-rgb: 255, 165, 0;
+            --status-unknown-text: #121212;
+            --status-unknown-on-dark: var(--status-unknown);
 
             --status-declined: #dc3545;
             --status-danger: #dc3545;
@@ -212,6 +219,7 @@
         .counter.approved { border-top-color: var(--status-success); }
         .counter.live     { border-top-color: var(--status-live); }
         .counter.declined { border-top-color: var(--status-declined); }
+        .counter.unknown { border-top-color: var(--status-unknown); }
         .counter-icon {
             width: 28px; height: 28px; border-radius: 50%; display: flex;
             align-items: center; justify-content: center;
@@ -220,11 +228,13 @@
         .counter.approved .counter-icon { background: var(--status-success-light); color: var(--status-success-on-dark); }
         .counter.live .counter-icon     { background: var(--status-live-light); color: var(--status-live-on-dark); }
         .counter.declined .counter-icon { background: var(--status-declined-light); color: var(--status-declined-on-dark); }
+        .counter.unknown .counter-icon { background: var(--status-unknown-light); color: var(--status-unknown-on-dark); }
         .counter-label { font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.2rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;}
         .counter-value { font-size: 1.4rem; font-weight: 700; }
         .counter.approved .counter-value.approved    { color: var(--status-success-on-dark); }
         .counter.live .aprovadas       { color: var(--status-live-on-dark); }
         .counter.declined .reprovadas  { color: var(--status-declined-on-dark); }
+        .counter.unknown .unknown  { color: var(--status-unknown-on-dark); }
 
         .progress-container {
             width: 100%; height: 4px; background-color: var(--bg-tertiary);
@@ -374,10 +384,7 @@
         .gate-credits-display-venex {
             font-size: 0.65rem; color: var(--text-tertiary); margin-top: 0.3rem; margin-bottom: 0.7rem;
         }
-        .gate-credits-display-venex a { color: var(--accent-primary); text-decoration: none; font-weight: 500; }
-        .gate-credits-display-venex a:hover { text-decoration: underline; filter: brightness(0.9); }
-        .amazon-cookie-helper-link-venex { font-size: 0.9em; margin-left: 0.3em; }
-        .amazon-cookie-helper-link-venex a { color: var(--accent-primary); }
+        .gate-credits-display-venex { font-size: 0.65rem; color: var(--text-tertiary); margin-top: 0.3rem; margin-bottom: 0.7rem; }
 
 
         .status-display-venex { text-align: center; margin-top: 0.7rem; margin-bottom: -0.2rem; }
@@ -389,7 +396,7 @@
         }
         .badge-neutral-venex { background-color: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-color); }
         body.light-mode .badge-neutral-venex { background-color: var(--lm-bg-tertiary); color: var(--lm-text-secondary); border: 1px solid var(--lm-border-color); }
-        .badge-info { background-color: #17a2b8; color: #fff; }
+        .badge-info { background-color: var(--status-info); color: var(--status-unknown-text); }
         .badge-success { background-color: var(--status-success); color: var(--status-success-text); }
         .badge-warning { background-color: var(--status-warning); color: var(--status-live-text); }
         .badge-danger { background-color: var(--status-danger); color: var(--status-declined-text); }
@@ -541,6 +548,7 @@
         .result-box-compact .approved-entry { border-left-color: var(--status-success); }
         .result-box-compact .live-entry     { border-left-color: var(--status-live); }
         .result-box-compact .declined-entry { border-left-color: var(--status-declined); }
+        .result-box-compact .unknown-entry { border-left-color: var(--status-unknown); }
 
         .result-box-compact span.text-success {
             color: var(--status-success-on-dark) !important;
@@ -698,18 +706,6 @@
         .swal-custom .swal2-html-container {
             color: var(--text-secondary) !important;
         }
-        .swal-custom.swal-embed .swal2-html-container {
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: stretch;
-            justify-content: stretch;
-        }
-        .swal-custom.swal-embed .swal2-popup {
-            padding: 0.5em;
-        }
         .swal-custom .swal2-confirm, .swal-custom .swal2-cancel, .swal-custom .swal2-close {
             margin: 0.5em !important;
             box-shadow: none !important;
@@ -832,10 +828,63 @@
             .form-group-half { min-width: 100%; }
             .result-box-compact { font-size: .65rem; max-height: 150px; }
 
-             .swal-custom.swal-embed .swal2-popup { /* Kept for video tutorials */
-                width: 95vw !important;
-             }
              .footer-spotify-player iframe {
                 height: 152px; /* Compact player height for mobile */
              }
+        }
+
+        .menu-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 5px);
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            width: 220px;
+            z-index: 1000;
+            overflow: hidden;
+            animation: fadeInScale 0.2s ease-out;
+        }
+
+        .menu-dropdown.show {
+            display: block;
+        }
+
+        .menu-dropdown ul {
+            list-style: none;
+            padding: 0.5rem;
+            margin: 0;
+        }
+
+        .menu-dropdown li a {
+            display: block;
+            padding: 0.6rem 0.8rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.75rem;
+            border-radius: var(--radius-sm);
+            transition: background-color var(--transition-fast), color var(--transition-fast);
+        }
+
+        .menu-dropdown li a:hover {
+            background-color: var(--accent-primary);
+            color: var(--accent-primary-text);
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
